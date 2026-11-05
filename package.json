@@ -1,0 +1,105 @@
+{
+  "name": "typeshelf",
+  "productName": "Typeshelf",
+  "version": "1.0.0",
+  "description": "A fast, modern font manager for Windows with Google Fonts & Fontshare auto-updates.",
+  "main": "out/main/index.js",
+  "author": "CenoDigital",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test": "vitest run",
+    "smoke": "electron-vite build && electron . --smoke",
+    "dist": "electron-vite build && electron-builder --win",
+    "dist:dir": "electron-vite build && electron-builder --win --dir",
+    "dev:web": "vite --config vite.web.config.ts"
+  },
+  "dependencies": {
+    "@tanstack/react-virtual": "^3.14.26",
+    "adm-zip": "^0.6.1",
+    "chokidar": "^6.0.0",
+    "electron-log": "^5.4.4",
+    "electron-updater": "^6.8.11",
+    "fontkit": "^2.0.4",
+    "koffi": "^3.3.7",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zustand": "^5.0.16"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
+    "@types/fontkit": "^2.0.9",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0",
+    "electron-vite": "^6.0.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  },
+  "allowScripts": {
+    "electron@45.2.3": true,
+    "electron-winstaller@5.4.0": true,
+    "koffi@3.3.7": true
+  },
+  "build": {
+    "appId": "com.cenodigital.typeshelf",
+    "productName": "Typeshelf",
+    "copyright": "Copyright © 2026 CenoDigital",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "out/**",
+      "package.json",
+      "!**/*.map"
+    ],
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "executableName": "Typeshelf"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Typeshelf",
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "Typeshelf-Setup-${version}.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.graphics-design",
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Graphics",
+      "icon": "build/icon.png"
+    }
+  }
+}
