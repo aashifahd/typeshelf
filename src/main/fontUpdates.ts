@@ -82,7 +82,7 @@ export function installFamily(
     const dir = join(managedRoot(), providerId, safeName(entry.name))
     await rm(dir, { recursive: true, force: true })
     await mkdir(join(managedRoot(), providerId), { recursive: true })
-    await rename(dl.staging, dir)
+    await renameRetry(dl.staging, dir)
 
     const rec: InstalledProviderFamily = {
       provider: providerId,
@@ -134,6 +134,24 @@ export function setPinned(providerId: ProviderId, key: string, pinned: boolean):
   emit.updates(providerStore.get().updates)
 }
 
+/**
+ * rename() that retries briefly on Windows sharing errors. Right after a font is
+ * deactivated, Windows (or an antivirus scanner) can keep its file open for a
+ * moment, which makes renaming the folder fail with EPERM/EBUSY/EACCES.
+ */
+async function renameRetry(from: string, to: string): Promise<void> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await rename(from, to)
+      return
+    } catch (e) {
+      const code = (e as NodeJS.ErrnoException).code
+      if (attempt >= 9 || !['EPERM', 'EBUSY', 'EACCES'].includes(code ?? '')) throw e
+      await new Promise((r) => setTimeout(r, 150 * (attempt + 1)))
+    }
+  }
+}
+
 function backupDir(rec: InstalledProviderFamily): string {
   return join(managedRoot(), '.backup', rec.provider, safeName(rec.name))
 }
@@ -157,11 +175,11 @@ async function swapIn(rec: InstalledProviderFamily, incoming: string): Promise<v
   try {
     await rm(backup, { recursive: true, force: true })
     await mkdir(join(backup, '..'), { recursive: true })
-    if (existsSync(rec.dir)) await rename(rec.dir, backup)
+    if (existsSync(rec.dir)) await renameRetry(rec.dir, backup)
     try {
-      await rename(incoming, rec.dir)
+      await renameRetry(incoming, rec.dir)
     } catch (e) {
-      if (existsSync(backup)) await rename(backup, rec.dir)
+      if (existsSync(backup)) await renameRetry(backup, rec.dir)
       throw e
     }
   } catch (e) {
@@ -275,8 +293,14 @@ export function rollback(providerId: ProviderId, key: string): Promise<void> {
     if (!existsSync(backup)) throw new Error('Backup not found')
     const tmp = join(managedRoot(), '.staging', randomUUID())
     await mkdir(join(tmp, '..'), { recursive: true })
-    await rename(backup, tmp)
-    await swapIn(rec, tmp)
+    await renameRetry(backup, tmp)
+    try {
+      await swapIn(rec, tmp)
+    } catch (e) {
+      // Keep the previous version available so the user can try again.
+      if (existsSync(tmp)) await renameRetry(tmp, backup).catch((err) => log.error('could not restore backup', err))
+      throw e
+    }
     providerStore.update((s) => {
       const r = s.installed.find((i) => i.provider === providerId && i.key === key)!
       const v = r.version

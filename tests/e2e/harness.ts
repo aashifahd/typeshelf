@@ -1,9 +1,9 @@
 // Shared helpers for the end-to-end tests.
 import { _electron as electron, expect, type ElectronApplication, type Locator, type Page } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 
 export const ROOT = resolve(__dirname, '../..')
 export const FIXTURES = join(ROOT, 'tests', 'fixtures', 'fonts')
@@ -49,7 +49,14 @@ export async function quit(r: Running): Promise<void> {
   await r.app.close().catch(() => undefined)
 }
 
+/** Deletes a temporary data folder, keeping the app's log in test-results/ for debugging. */
 export function removeUserData(dir: string): void {
+  const log = join(dir, 'logs', 'main.log')
+  if (existsSync(log)) {
+    const out = join(ROOT, 'test-results', 'app-logs')
+    mkdirSync(out, { recursive: true })
+    copyFileSync(log, join(out, `${basename(dir)}.log`))
+  }
   rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 })
 }
 
