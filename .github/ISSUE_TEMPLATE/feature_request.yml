@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest an idea for Typeshelf
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the problem or workflow, not just the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How would you like Typeshelf to help?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What do you do today?
+      description: Other apps or workarounds you use now.

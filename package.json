@@ -2,10 +2,11 @@
   "name": "typeshelf",
   "productName": "Typeshelf",
   "version": "1.0.0",
-  "description": "A fast, modern font manager for Windows with Google Fonts & Fontshare auto-updates.",
+  "description": "A free, open-source font manager for Windows with auto-updating Google Fonts and Fontshare fonts.",
   "main": "out/main/index.js",
-  "author": "CenoDigital",
-  "license": "UNLICENSED",
+  "author": "CenoDigital (Pvt) Ltd",
+  "homepage": "https://cenodigital.com/typeshelf",
+  "license": "GPL-3.0-or-later",
   "private": true,
   "scripts": {
     "dev": "electron-vite dev",
@@ -16,7 +17,9 @@
     "smoke": "electron-vite build && electron . --smoke",
     "dist": "electron-vite build && electron-builder --win",
     "dist:dir": "electron-vite build && electron-builder --win --dir",
-    "dev:web": "vite --config vite.web.config.ts"
+    "dev:web": "vite --config vite.web.config.ts",
+    "notices": "node scripts/third-party-notices.cjs",
+    "notices:check": "node scripts/third-party-notices.cjs --check"
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.14.26",
@@ -37,7 +40,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.2.1",
-    "electron": "^45.2.3",
+    "electron": "44.10.2",
     "electron-builder": "^26.18.0",
     "electron-vite": "^6.0.0",
     "typescript": "^7.0.2",
@@ -45,14 +48,32 @@
     "vitest": "^5.1.0"
   },
   "allowScripts": {
-    "electron@45.2.3": true,
+    "electron@44.10.2": true,
     "electron-winstaller@5.4.0": true,
     "koffi@3.3.7": true
   },
   "build": {
     "appId": "com.cenodigital.typeshelf",
     "productName": "Typeshelf",
-    "copyright": "Copyright © 2026 CenoDigital",
+    "copyright": "Copyright (C) 2026 CenoDigital (Pvt) Ltd",
+    "electronFuses": {
+      "runAsNode": false,
+      "enableCookieEncryption": true,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true
+    },
+    "extraResources": [
+      {
+        "from": "LICENSE",
+        "to": "LICENSE.txt"
+      },
+      {
+        "from": "THIRD_PARTY_NOTICES.md",
+        "to": "THIRD_PARTY_NOTICES.md"
+      }
+    ],
     "directories": {
       "output": "dist",
       "buildResources": "build"

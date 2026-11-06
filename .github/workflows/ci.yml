@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Check and build (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # npm can skip Electron's download script; fetch the binary if it's missing.
+      - name: Make sure the Electron binary is present
+        shell: pwsh
+        run: |
+          if (-not (Test-Path node_modules/electron/dist/electron.exe)) { node node_modules/electron/install.js }
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      - name: Third-party licences
+        run: npm run notices:check
+
+      - name: Build installer
+        run: npm run dist -- --publish never
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Typeshelf-installer-${{ github.sha }}
+          path: dist/Typeshelf-Setup-*.exe
+          retention-days: 14
+          if-no-files-found: error
