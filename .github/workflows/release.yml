@@ -56,6 +56,19 @@ jobs:
       # Code signing goes here once SignPath Foundation approves the project
       # (see docs/RELEASING.md). Until then the installer is unsigned.
 
+      # Create the draft first. If electron-builder has to create it, its
+      # parallel uploads race and can create two drafts with the files split.
+      - name: Create the draft release
+        shell: pwsh
+        run: |
+          gh release view "${{ github.ref_name }}" 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            $title = "${{ github.ref_name }}".TrimStart('v')
+            gh release create "${{ github.ref_name }}" --draft --title $title --notes "See CHANGELOG.md"
+          }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build installer and upload to a draft release
         run: npx electron-builder --win --publish always
         env:
