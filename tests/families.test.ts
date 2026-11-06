@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { familyState, findDuplicates, groupFamilies, matchesFilter, pickPrimary } from '../src/shared/families'
+import { familyState, findDuplicates, groupFamilies, matchesFilter, pickPrimary, searchRank } from '../src/shared/families'
+
 import type { FaceInfo, Source } from '../src/shared/types'
 
 let n = 0
@@ -108,5 +109,15 @@ describe('filters & duplicates', () => {
     ])
     expect(d).toHaveLength(1)
     expect(d[0][0].postscriptName).toBe('Dup-Regular')
+  })
+})
+
+describe('searchRank', () => {
+  it('ranks name matches before other matches', () => {
+    expect(searchRank('Segoe UI', 'segoe ui')).toBe(0)
+    expect(searchRank('Noto Segoe UI Sans', 'Segoe UI')).toBe(1)
+    expect(searchRank('UI Segoe', 'segoe ui')).toBe(2)
+    expect(searchRank('Myanmar Text', 'segoe ui')).toBe(3)
+    expect(searchRank('Anything', '  ')).toBe(0)
   })
 })

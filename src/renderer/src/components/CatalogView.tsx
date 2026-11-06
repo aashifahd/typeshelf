@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { CATEGORIES, type CatalogFamily, type Category, type ProviderId } from '@shared/types'
+import { searchRank } from '@shared/families'
 import { api, run, useStore } from '../store'
 import { requestProviderPreview } from '../lib/fontLoader'
 import { Menu, Spinner } from './common'
@@ -171,6 +172,7 @@ export function CatalogView({ provider }: { provider: ProviderId }): ReactElemen
     if (sort === 'popular') l = [...l].sort((a, b) => a.popularity - b.popularity)
     else if (sort === 'newest') l = [...l].sort((a, b) => (b.dateAdded ?? '').localeCompare(a.dateAdded ?? ''))
     else l = [...l].sort((a, b) => a.name.localeCompare(b.name))
+    if (s) l = [...l].sort((a, b) => searchRank(a.name, s) - searchRank(b.name, s))
     return l
   }, [catalog, q, cat, variableOnly, onlyInstalled, sort, installed, provider])
 

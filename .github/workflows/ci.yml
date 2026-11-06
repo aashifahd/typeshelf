@@ -66,3 +66,42 @@ jobs:
           path: dist/Typeshelf-Setup-*.exe
           retention-days: 14
           if-no-files-found: error
+
+  e2e:
+    name: End-to-end tests (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Make sure the Electron binary is present
+        shell: pwsh
+        run: |
+          if (-not (Test-Path node_modules/electron/dist/electron.exe)) { node node_modules/electron/install.js }
+
+      - name: Build
+        run: npm run build
+
+      # Drives the real app: library, search, detail tabs, folder + Windows
+      # activation, session mode, settings, Google Fonts install, automatic
+      # update, rollback, uninstall and the uninstaller's font cleanup.
+      - name: End-to-end tests
+        run: npx playwright test
+        env:
+          GOOGLE_FONTS_API_KEY: ${{ secrets.GOOGLE_FONTS_API_KEY }}
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-results-${{ github.sha }}
+          path: test-results/
+          retention-days: 14

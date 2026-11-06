@@ -125,6 +125,22 @@ export function matchesFilter(f: Family, filter: FamilyFilter): boolean {
   return true
 }
 
+/**
+ * How well a family's *name* matches a search (lower is better), so families
+ * named after the query come before ones that only match on designer or
+ * PostScript names: 0 name starts with the query, 1 name contains it,
+ * 2 name contains every word, 3 matched elsewhere.
+ */
+export function searchRank(name: string, query: string): number {
+  const q = query.trim().toLowerCase()
+  const n = name.toLowerCase()
+  if (!q) return 0
+  if (n.startsWith(q)) return 0
+  if (n.includes(q)) return 1
+  if (q.split(/\s+/).every((t) => n.includes(t))) return 2
+  return 3
+}
+
 /** Faces whose PostScript name appears in more than one file (conflicts / duplicates). */
 export function findDuplicates(faces: FaceInfo[]): FaceInfo[][] {
   const map = new Map<string, FaceInfo[]>()

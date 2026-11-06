@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { Source } from '@shared/types'
-import { familyState, matchesFilter, type ActiveState, type Family } from '@shared/families'
+import { familyState, matchesFilter, searchRank, type ActiveState, type Family } from '@shared/families'
 import { useStore, type Nav } from '../store'
 
 export interface Derived {
@@ -75,6 +75,8 @@ export function useVisibleFamilies(nav: Nav): Family[] {
     list = list.filter((f) => matchesFilter(f, filter))
     if (sort === 'newest') list = [...list].sort((a, b) => b.newest - a.newest)
     else if (sort === 'styles') list = [...list].sort((a, b) => b.faces.length - a.faces.length)
+    // Stable sort: within each rank the chosen order is kept.
+    if (query.trim()) list = [...list].sort((a, b) => searchRank(a.name, query) - searchRank(b.name, query))
     return list
   }, [families, collections, nav, query, categories, variableOnly, monospaceOnly, script, sort, d])
 }

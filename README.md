@@ -74,6 +74,7 @@ npm run dev:web    # the UI only, in a browser, with sample data (http://localho
 npm run typecheck
 npm test           # unit tests and tests against your installed fonts
 LIVE=1 npm test    # also downloads from Google Fonts and Fontshare
+npm run test:e2e   # drives the real app with Playwright (see docs/TESTING.md)
 node scripts/activation-e2e.mts   # real activate → verify → deactivate on this PC
 ```
 

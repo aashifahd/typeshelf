@@ -24,6 +24,7 @@ npm run dev:web    # the UI only, in a browser, with sample data (http://localho
 ```bash
 npm run typecheck
 npm test
+npm run test:e2e        # drives the real app; see docs/TESTING.md
 npm run notices:check   # only fails if you changed dependencies
 ```
 
