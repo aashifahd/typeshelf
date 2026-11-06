@@ -18,7 +18,7 @@ import {
   type Running
 } from './harness'
 
-test.describe('library', () => {
+test.describe.serial('library', () => {
   let r: Running
 
   test.beforeAll(async () => {
@@ -93,7 +93,8 @@ test.describe('library', () => {
   })
 })
 
-test.describe('font folders and activation', () => {
+// Serial: each step builds on the previous one, and a retry reruns the group.
+test.describe.serial('font folders and activation', () => {
   test.skip(!isWindows, 'activation uses the Windows font registry')
   let r: Running
   let folder: string
@@ -127,8 +128,17 @@ test.describe('font folders and activation', () => {
     const entries = typeshelfRegistryEntries('Silkscreen')
     expect(entries.size).toBe(1)
     expect([...entries.values()][0].toLowerCase()).toContain(folder.toLowerCase())
-    const stored = readJson<{ records: Record<string, { mode: string }> }>(r.userData, 'activations.json')
-    expect(Object.values(stored.records).some((x) => x.mode === 'permanent')).toBe(true)
+    // The app saves its stores shortly after a change.
+    await expect
+      .poll(() => {
+        try {
+          const s = readJson<{ records: Record<string, { mode: string }> }>(r.userData, 'activations.json')
+          return Object.entries(s.records).some(([k, x]) => k.includes('silkscreen') && x.mode === 'permanent')
+        } catch {
+          return false
+        }
+      })
+      .toBe(true)
 
     await row.getByRole('switch', { name: 'Deactivate' }).click()
     await expect(row.getByRole('switch', { name: 'Activate' })).toHaveAttribute('aria-checked', 'false')

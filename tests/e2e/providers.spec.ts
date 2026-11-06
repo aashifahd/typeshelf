@@ -10,8 +10,14 @@ const FAMILY = 'Silkscreen'
 const OLD = '2000-01-01'
 
 type Providers = { installed: InstalledProviderFamily[]; updates: unknown[] }
-const record = (userData: string): InstalledProviderFamily | undefined =>
-  readJson<Providers>(userData, 'providers.json').installed.find((i) => i.key === FAMILY)
+/** The stored record, or undefined until the app has saved it (saves are slightly delayed). */
+const record = (userData: string): InstalledProviderFamily | undefined => {
+  try {
+    return readJson<Providers>(userData, 'providers.json').installed.find((i) => i.key === FAMILY)
+  } catch {
+    return undefined
+  }
+}
 
 test.describe.serial('Google Fonts: install, auto-update, roll back', () => {
   const userData = newUserData()
@@ -33,8 +39,8 @@ test.describe.serial('Google Fonts: install, auto-update, roll back', () => {
     await row.getByRole('button', { name: 'Install' }).click()
     await expect(row.getByText(/^Installed · /)).toBeVisible({ timeout: 60_000 })
 
+    await expect.poll(() => record(userData)?.version ?? '').toMatch(/^\d{4}-\d{2}-\d{2}$/)
     const rec = record(userData)!
-    expect(rec.version).toMatch(/^\d{4}-\d{2}-\d{2}$/)
     expect(rec.files.length).toBeGreaterThan(0)
     for (const f of rec.files) expect(existsSync(f)).toBe(true)
     currentVersion = rec.version
