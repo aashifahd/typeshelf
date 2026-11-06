@@ -4,7 +4,7 @@ All notable changes to Typeshelf are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [1.0.0] - Unreleased
+## [1.0.0] - 2026-11-06
 
 First public release.
 
