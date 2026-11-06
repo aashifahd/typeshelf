@@ -5,6 +5,7 @@ import log from '../log'
 import { absolutizeCss, getBuffer, getText } from './http'
 import { cachedCatalog } from './cache'
 import {
+  expandVariableVariants,
   googleApiDownloads,
   googleAxisName,
   googlePreviewVariant,
@@ -54,7 +55,7 @@ async function apiCatalog(): Promise<CatalogFamily[]> {
   // Sorted by popularity so the list position doubles as the popularity rank.
   const items = await apiList({ sort: 'popularity', capability: 'VF' })
   return items.map((f, rank): CatalogFamily => {
-    const variants = (f.variants ?? []).map(normalizeGoogleVariant)
+    const variants = expandVariableVariants((f.variants ?? []).map(normalizeGoogleVariant), f.axes ?? [])
     const pv = googlePreviewVariant(variants)
     const axes: Axis[] = (f.axes ?? [])
       .filter((a) => a.tag !== 'ital')

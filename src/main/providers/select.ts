@@ -91,6 +91,25 @@ export function normalizeGoogleVariant(v: string): string {
   return m ? m[1] + (m[2] ? 'i' : '') : v
 }
 
+/**
+ * With `capability=VF` the API lists only "regular"/"italic" for variable
+ * families. Expand them to the named weights the Weight axis covers, so a
+ * family shows the same styles as its static download.
+ */
+export function expandVariableVariants(variants: string[], axes: { tag: string; start: number; end: number }[]): string[] {
+  const wght = axes.find((a) => a.tag === 'wght')
+  if (!wght) return variants
+  const upright = variants.some((v) => !v.endsWith('i'))
+  const italic = variants.some((v) => v.endsWith('i'))
+  const out: string[] = []
+  for (let w = 100; w <= 900; w += 100) {
+    if (w < wght.start || w > wght.end) continue
+    if (upright) out.push(String(w))
+    if (italic) out.push(`${w}i`)
+  }
+  return out.length ? out : variants
+}
+
 const WEIGHT_NAMES: Record<string, string> = {
   '100': 'Thin',
   '200': 'ExtraLight',

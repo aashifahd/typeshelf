@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  expandVariableVariants,
   googleApiDownloads,
   googleAxisName,
   normalizeGoogleVariant,
@@ -138,5 +139,18 @@ describe('Google Fonts Developer API helpers', () => {
 
   it('skips non-font files', () => {
     expect(googleApiDownloads('X', { regular: G + 'a.woff2' }, [])).toEqual([])
+  })
+})
+
+describe('expandVariableVariants', () => {
+  it('lists the named weights a variable family covers', () => {
+    expect(expandVariableVariants(['400', '400i'], [{ tag: 'wght', start: 400, end: 700 }])).toEqual([
+      '400', '400i', '500', '500i', '600', '600i', '700', '700i'
+    ])
+    expect(expandVariableVariants(['400'], [{ tag: 'wght', start: 100, end: 900 }])).toHaveLength(9)
+  })
+  it('leaves families without a weight axis alone', () => {
+    expect(expandVariableVariants(['400'], [{ tag: 'wdth', start: 75, end: 100 }])).toEqual(['400'])
+    expect(expandVariableVariants(['400', '700'], [])).toEqual(['400', '700'])
   })
 })
