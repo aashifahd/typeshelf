@@ -14,9 +14,11 @@ import { applySettingsSideEffects, applyTitleBar, overlayColors } from './settin
 import iconPath from '../../build/icon.png?asset'
 
 const SMOKE = process.argv.includes('--smoke')
+/** Run by the uninstaller: turn off all fonts Typeshelf activated, then exit. */
+const DEACTIVATE_ALL = process.argv.includes('--deactivate-all-fonts')
 const STARTED_HIDDEN = process.argv.includes('--hidden') || settingsStore.get().startMinimized
 
-if (!SMOKE && !app.requestSingleInstanceLock()) {
+if (!SMOKE && !DEACTIVATE_ALL && !app.requestSingleInstanceLock()) {
   app.quit()
   process.exit(0)
 }
@@ -133,6 +135,18 @@ async function runSmokeTest(): Promise<void> {
 app.on('second-instance', showWindow)
 
 app.whenReady().then(async () => {
+  if (DEACTIVATE_ALL) {
+    try {
+      const n = await activation.deactivateAll()
+      log.info(`uninstall: turned off ${n} font file(s)`)
+      flushAll()
+      app.exit(0)
+    } catch (e) {
+      log.error('uninstall: turning off fonts failed', e)
+      app.exit(1)
+    }
+    return
+  }
   Menu.setApplicationMenu(null)
   applySettingsSideEffects({}, true)
   nativeTheme.on('updated', applyTitleBar)

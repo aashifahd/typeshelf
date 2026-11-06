@@ -57,11 +57,15 @@ Typeshelf has no account, no ads and no tracking. It only connects to the intern
 - check those fonts for updates;
 - check for new versions of Typeshelf itself.
 
-Your library index, settings and collections stay on your PC in `%APPDATA%\Typeshelf`.
+Links in the app (newsletter sign-up, bug reports, cenodigital.com) only open in your browser when you click them. Links to cenodigital.com include `utm_*` tags so we can see that a visit came from Typeshelf; nothing else is attached. Bug reports open a GitHub form with your Typeshelf and Windows versions filled in, and you decide what to submit.
+
+Your library index, settings and collections stay on your PC in `%APPDATA%\Typeshelf`. When you uninstall, the uninstaller asks whether to turn off the fonts Typeshelf activated.
 
 ## Development
 
 You need Windows 10 or 11 and Node.js 24.
+
+For Google Fonts, official builds use the [Google Fonts Developer API](https://developers.google.com/fonts/docs/developer_api). To use it locally, copy `.env.example` to `.env.local` and add a key. Without a key the app falls back to fonts.google.com's public endpoints, which work but are undocumented.
 
 ```bash
 npm ci

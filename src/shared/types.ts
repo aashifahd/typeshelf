@@ -213,6 +213,8 @@ export interface ToastMessage {
 export interface AppInfo {
   version: string
   platform: string
+  /** os.release(), e.g. "10.0.26100" */
+  osRelease: string
   userData: string
   activationSupported: boolean
 }
@@ -235,6 +237,8 @@ export interface TypeshelfApi {
   getGlyphs(faceId: string): Promise<GlyphInfo[]>
   revealFile(path: string): Promise<void>
   openExternal(url: string): Promise<void>
+  /** Opens the folder that holds main.log, for attaching to bug reports. */
+  openLogFolder(): Promise<void>
   exportFaces(faceIds: string[]): Promise<number>
   importFiles(): Promise<number>
 

@@ -209,6 +209,21 @@ export class ActivationManager {
     }
   }
 
+  /**
+   * Turn off every font Typeshelf activated, including registry entries left by
+   * older installs. Used by the uninstaller (`--deactivate-all-fonts`).
+   */
+  async deactivateAll(): Promise<number> {
+    await this.init()
+    const n = this.deactivate(Object.values(this.records).map((r) => r.path)).deactivated
+    if (isWin) {
+      for (const [name] of await win.listUserFonts()) if (name.endsWith(REG_SUFFIX)) this.safeUnregister(name)
+      this.notifyOs()
+    }
+    activationStore.flush()
+    return n
+  }
+
   /** Remove session-only fonts when the app quits. */
   shutdown(): void {
     const session = Object.values(this.records).filter((r) => r.mode === 'session')

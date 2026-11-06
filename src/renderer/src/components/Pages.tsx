@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactElement } from 'react'
 import type { Settings } from '@shared/types'
+import { links, windowsName } from '@shared/links'
 import { findDuplicates, formatBytes } from '@shared/families'
 import { api, run, useStore } from '../store'
 import { useDerived } from '../lib/derived'
@@ -481,6 +482,45 @@ export function SettingsView(): ReactElement {
             <I.Refresh /> Check for app updates
           </button>
         </Row>
+        <Row title="Font news and tips" desc="An occasional email about new fonts and Typeshelf releases. Opens a sign-up page in your browser; nothing is sent from the app.">
+          <button type="button" className="btn" onClick={() => void run(api().openExternal(links.newsletter(info?.version)))}>
+            <I.External /> Subscribe
+          </button>
+        </Row>
+        <Row title="Report a problem" desc="Opens a bug report on GitHub with your version filled in. Attach main.log from the log folder if you can.">
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" className="btn" onClick={() => void run(api().openLogFolder())}>
+              <I.Folder /> Log folder
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => void run(api().openExternal(links.bugReport(info?.version ?? '', windowsName(info?.osRelease ?? ''))))}
+            >
+              <I.External /> Report
+            </button>
+          </div>
+        </Row>
+        <Row title="Free and open source" desc="Licensed under GPL-3.0-or-later. Source code, issues and releases are on GitHub.">
+          <button type="button" className="btn" onClick={() => void run(api().openExternal(links.source()))}>
+            <I.External /> Source code
+          </button>
+        </Row>
+      </div>
+
+      <div className="card credit">
+        <h3>Made by CenoDigital</h3>
+        <p className="muted">
+          Typeshelf is built and maintained by CenoDigital, a digital studio. We design brands and build websites and custom apps like this one.
+        </p>
+        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+          <button type="button" className="btn primary" onClick={() => void run(api().openExternal(links.services(info?.version)))}>
+            <I.External /> Work with us
+          </button>
+          <button type="button" className="btn" onClick={() => void run(api().openExternal(links.credit(info?.version)))}>
+            cenodigital.com
+          </button>
+        </div>
       </div>
     </div>
   )

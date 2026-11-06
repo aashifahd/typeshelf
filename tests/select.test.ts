@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  googleApiDownloads,
+  googleAxisName,
+  normalizeGoogleVariant,
   googlePreviewVariant,
   isNewerVersion,
   mapFontshareCategory,
@@ -94,5 +97,46 @@ describe('category + preview helpers', () => {
     expect(googlePreviewVariant(['300', '400', '700'])).toEqual({ weight: 400, italic: false })
     expect(googlePreviewVariant(['300', '300i'])).toEqual({ weight: 300, italic: false })
     expect(googlePreviewVariant(['400i'])).toEqual({ weight: 400, italic: true })
+  })
+})
+
+describe('Google Fonts Developer API helpers', () => {
+  const G = 'https://fonts.gstatic.com/s/lora/v35/'
+
+  it('normalizes API variant names', () => {
+    expect(['regular', 'italic', '700', '700italic', '100'].map(normalizeGoogleVariant)).toEqual(['400', '400i', '700', '700i', '100'])
+    expect(mapGoogleCategory('sans-serif')).toBe('sans-serif')
+    expect(googleAxisName('wght')).toBe('Weight')
+    expect(googleAxisName('ABCD')).toBe('ABCD')
+  })
+
+  it('names static files readably', () => {
+    const d = googleApiDownloads(
+      'Lora',
+      { regular: G + 'a.ttf', italic: G + 'b.ttf', '700': G + 'c.ttf', '700italic': G + 'd.ttf' },
+      []
+    )
+    expect(d.map((x) => x.filename).sort()).toEqual(['Lora-Bold.ttf', 'Lora-BoldItalic.ttf', 'Lora-Italic.ttf', 'Lora-Regular.ttf'])
+  })
+
+  it('downloads a shared variable file once and names it with its axes', () => {
+    const d = googleApiDownloads(
+      'Open Sans',
+      { regular: G + 'v.ttf', '700': G + 'v.ttf', italic: G + 'vi.ttf', '700italic': G + 'vi.ttf' },
+      ['wdth', 'wght']
+    )
+    expect(d).toEqual([
+      { url: G + 'v.ttf', filename: 'OpenSans[wdth,wght].ttf' },
+      { url: G + 'vi.ttf', filename: 'OpenSans-Italic[wdth,wght].ttf' }
+    ])
+  })
+
+  it('treats many distinct files as statics even when axes are known', () => {
+    const files = { '300': G + '1.ttf', regular: G + '2.ttf', '700': G + '3.ttf' }
+    expect(googleApiDownloads('Lora', files, ['wght']).map((x) => x.filename).sort()).toEqual(['Lora-Bold.ttf', 'Lora-Light.ttf', 'Lora-Regular.ttf'])
+  })
+
+  it('skips non-font files', () => {
+    expect(googleApiDownloads('X', { regular: G + 'a.woff2' }, [])).toEqual([])
   })
 })

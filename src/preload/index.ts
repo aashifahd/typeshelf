@@ -12,6 +12,7 @@ const METHODS = [
   'getGlyphs',
   'revealFile',
   'openExternal',
+  'openLogFolder',
   'exportFaces',
   'importFiles',
   'getSettings',

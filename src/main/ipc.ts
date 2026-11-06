@@ -1,7 +1,8 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { copyFile, mkdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { basename, join } from 'node:path'
+import { release } from 'node:os'
+import { basename, dirname, join } from 'node:path'
 import type {
   ActivationMode,
   Collection,
@@ -67,6 +68,7 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
     appInfo: async () => ({
       version: app.getVersion(),
       platform: process.platform,
+      osRelease: release(),
       userData: app.getPath('userData'),
       activationSupported
     }),
@@ -109,6 +111,11 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
     openExternal: async (url) => {
       const u = new URL(String(url))
       if (u.protocol === 'https:' || u.protocol === 'http:' || u.protocol === 'mailto:') await shell.openExternal(u.toString())
+    },
+    openLogFolder: async () => {
+      const file = log.transports.file.getFile().path
+      if (existsSync(file)) shell.showItemInFolder(file)
+      else await shell.openPath(dirname(file))
     },
     exportFaces: async (ids) => {
       assertIds(ids)

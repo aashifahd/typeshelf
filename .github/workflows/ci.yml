@@ -46,6 +46,10 @@ jobs:
 
       - name: Build installer
         run: npm run dist -- --publish never
+        env:
+          # Restricted Google Fonts Developer API key (repository secret). Builds
+          # without it fall back to the undocumented fonts.google.com endpoints.
+          MAIN_VITE_GOOGLE_FONTS_API_KEY: ${{ secrets.GOOGLE_FONTS_API_KEY }}
 
       - name: Upload installer
         uses: actions/upload-artifact@v7

@@ -47,6 +47,7 @@ function dedupeByName(entries: string[]): string[] {
 export function mapGoogleCategory(c: string | undefined): Category {
   switch ((c ?? '').toLowerCase()) {
     case 'sans serif':
+    case 'sans-serif':
       return 'sans-serif'
     case 'serif':
       return 'serif'
@@ -80,6 +81,79 @@ export function googlePreviewVariant(variants: string[]): { weight: number; ital
   )[0]
   if (!pick) return { weight: 400, italic: false }
   return { weight: parseInt(pick) || 400, italic: pick.endsWith('i') }
+}
+
+/** Developer API variant names ("regular", "700italic") → catalogue format ("400", "700i"). */
+export function normalizeGoogleVariant(v: string): string {
+  if (v === 'regular') return '400'
+  if (v === 'italic') return '400i'
+  const m = /^(\d{3})(italic)?$/.exec(v)
+  return m ? m[1] + (m[2] ? 'i' : '') : v
+}
+
+const WEIGHT_NAMES: Record<string, string> = {
+  '100': 'Thin',
+  '200': 'ExtraLight',
+  '300': 'Light',
+  '400': 'Regular',
+  '500': 'Medium',
+  '600': 'SemiBold',
+  '700': 'Bold',
+  '800': 'ExtraBold',
+  '900': 'Black'
+}
+
+/**
+ * Turn a Developer API `files` map into downloads with readable file names
+ * (the API's URLs end in opaque hashes). Duplicate URLs are downloaded once:
+ * with `capability=VF` several variants point at the same variable file.
+ */
+export function googleApiDownloads(
+  family: string,
+  files: Record<string, string>,
+  axisTags: string[]
+): { url: string; filename: string }[] {
+  const base = family.replace(/[^A-Za-z0-9]+/g, '')
+  const byUrl = new Map<string, string[]>()
+  for (const [variant, url] of Object.entries(files)) {
+    if (!/\.(ttf|otf)$/i.test(new URL(url).pathname)) continue
+    byUrl.set(url, [...(byUrl.get(url) ?? []), normalizeGoogleVariant(variant)])
+  }
+  const shared = [...byUrl.values()].some((vs) => vs.length > 1)
+  const out: { url: string; filename: string }[] = []
+  for (const [url, variants] of byUrl) {
+    const italic = variants.every((v) => v.endsWith('i'))
+    const ext = /\.otf$/i.test(url) ? 'otf' : 'ttf'
+    if (axisTags.length && (shared || byUrl.size <= 2)) {
+      out.push({ url, filename: `${base}${italic ? '-Italic' : ''}[${axisTags.join(',')}].${ext}` })
+    } else {
+      const v = variants[0]
+      const weight = WEIGHT_NAMES[v.replace(/i$/, '')] ?? v.replace(/i$/, '')
+      const style = italic ? (weight === 'Regular' ? 'Italic' : `${weight}Italic`) : weight
+      out.push({ url, filename: `${base}-${style}.${ext}` })
+    }
+  }
+  return out
+}
+
+const AXIS_NAMES: Record<string, string> = {
+  wght: 'Weight',
+  wdth: 'Width',
+  ital: 'Italic',
+  slnt: 'Slant',
+  opsz: 'Optical size',
+  GRAD: 'Grade',
+  XHGT: 'x-height',
+  CASL: 'Casual',
+  MONO: 'Monospace',
+  CRSV: 'Cursive',
+  SOFT: 'Softness',
+  WONK: 'Wonky',
+  FILL: 'Fill'
+}
+
+export function googleAxisName(tag: string): string {
+  return AXIS_NAMES[tag] ?? tag
 }
 
 /** Compare provider versions. Google uses ISO dates, Fontshare uses "1.002" style strings. */

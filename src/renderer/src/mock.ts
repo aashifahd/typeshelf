@@ -214,7 +214,13 @@ export function installMock(): void {
   }
 
   const api: TypeshelfApi = {
-    appInfo: async () => ({ version: '1.0.0-preview', platform: 'browser', userData: '(browser preview)', activationSupported: false }),
+    appInfo: async () => ({
+      version: '1.0.0-preview',
+      platform: 'browser',
+      osRelease: '10.0.26100',
+      userData: '(browser preview)',
+      activationSupported: false
+    }),
     getLibrary: async () => ({ ...lib }),
     rescan: async () => {
       for (let i = 0; i <= 10; i++) {
@@ -232,6 +238,7 @@ export function installMock(): void {
     },
     revealFile: async () => undefined,
     openExternal: async (u) => void window.open(u, '_blank'),
+    openLogFolder: async () => undefined,
     exportFaces: async (ids) => ids.length,
     importFiles: async () => 0,
     getSettings: async () => settings,
