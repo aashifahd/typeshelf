@@ -110,12 +110,20 @@ export function uninstallFamily(providerId: ProviderId, key: string): Promise<vo
     const rec = findInstalled(providerId, key)
     if (!rec) return
     activation.deactivate(facesUnder(rec.dir).map((f) => f.path))
-    try {
-      await shell.trashItem(rec.dir)
-    } catch {
-      await rm(rec.dir, { recursive: true, force: true })
+    // Just-deactivated fonts (and fresh downloads being scanned by antivirus)
+    // can stay locked for a moment, so retry before giving up.
+    let trashed = false
+    for (let attempt = 0; attempt < 4 && !trashed; attempt++) {
+      try {
+        await shell.trashItem(rec.dir)
+        trashed = true
+      } catch (e) {
+        log.warn(`uninstall: moving ${rec.dir} to the Recycle Bin failed (attempt ${attempt + 1})`, e)
+        await new Promise((r) => setTimeout(r, 300 * (attempt + 1)))
+      }
     }
-    await rm(backupDir(rec), { recursive: true, force: true })
+    if (!trashed) await rm(rec.dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 })
+    await rm(backupDir(rec), { recursive: true, force: true, maxRetries: 10, retryDelay: 300 })
     providerStore.update((s) => {
       s.installed = s.installed.filter((i) => i !== rec)
       s.updates = s.updates.filter((u) => updKey(u.provider, u.key) !== updKey(providerId, key))
