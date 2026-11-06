@@ -263,6 +263,9 @@ export interface TypeshelfApi {
   rollbackFamily(provider: ProviderId, key: string): Promise<void>
 
   checkAppUpdate(): Promise<{ available: boolean; version?: string; message?: string }>
+  getAppUpdateState(): Promise<AppUpdateState>
+  /** Quits, installs the downloaded update and restarts. */
+  installAppUpdate(): Promise<void>
 
   on<E extends keyof TypeshelfEvents>(event: E, cb: (payload: TypeshelfEvents[E]) => void): () => void
 }
@@ -273,6 +276,15 @@ export interface TypeshelfEvents {
   'updates:changed': FontUpdate[]
   'toast': ToastMessage
   'install:progress': { provider: ProviderId; key: string; done: number; total: number }
+  'appUpdate:changed': AppUpdateState
+}
+
+/** Self-update of the Typeshelf app itself (not fonts). */
+export interface AppUpdateState {
+  status: 'idle' | 'checking' | 'downloading' | 'ready' | 'error'
+  version?: string
+  percent?: number
+  message?: string
 }
 
 export const IPC_EVENTS: (keyof TypeshelfEvents)[] = [
@@ -280,5 +292,6 @@ export const IPC_EVENTS: (keyof TypeshelfEvents)[] = [
   'scan:progress',
   'updates:changed',
   'toast',
-  'install:progress'
+  'install:progress',
+  'appUpdate:changed'
 ]

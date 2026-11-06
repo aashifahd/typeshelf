@@ -58,6 +58,14 @@
     "appId": "com.cenodigital.typeshelf",
     "productName": "Typeshelf",
     "copyright": "Copyright (C) 2026 CenoDigital (Pvt) Ltd",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "aashifahd",
+        "repo": "typeshelf",
+        "releaseType": "draft"
+      }
+    ],
     "electronFuses": {
       "runAsNode": false,
       "enableCookieEncryption": true,

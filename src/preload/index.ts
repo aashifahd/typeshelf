@@ -30,10 +30,12 @@ const METHODS = [
   'getFontUpdates',
   'applyFontUpdates',
   'rollbackFamily',
-  'checkAppUpdate'
+  'checkAppUpdate',
+  'getAppUpdateState',
+  'installAppUpdate'
 ] as const
 
-const EVENTS: (keyof TypeshelfEvents)[] = ['library:changed', 'scan:progress', 'updates:changed', 'toast', 'install:progress']
+const EVENTS: (keyof TypeshelfEvents)[] = ['library:changed', 'scan:progress', 'updates:changed', 'toast', 'install:progress', 'appUpdate:changed']
 
 const api: Record<string, unknown> = {}
 for (const m of METHODS) {

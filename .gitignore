@@ -7,3 +7,5 @@ dist
 !.env.example
 test-results
 playwright-report
+dist-old
+dist-new

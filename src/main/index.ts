@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, Tray, nativeImage, nativeTheme, shell } from 'electron'
+import { app, BrowserWindow, Menu, Notification, Tray, nativeImage, nativeTheme, shell } from 'electron'
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import log from './log'
@@ -166,7 +166,12 @@ app.whenReady().then(async () => {
     progress: (p) => send('install:progress', p)
   })
 
-  registerIpc(() => win)
+  registerIpc(
+    () => win,
+    () => {
+      quitting = true // let the window close instead of hiding to the tray
+    }
+  )
   await activation.init().catch((e) => log.error('activation init failed', e))
 
   win = createWindow()
@@ -179,7 +184,14 @@ app.whenReady().then(async () => {
   await purgePendingDeletes().catch((e) => log.error('purging pending deletes failed', e))
   void library.scan()
   startUpdateScheduler()
-  initAppUpdater()
+  initAppUpdater((s) => {
+    send('appUpdate:changed', s)
+    if (s.status === 'ready') {
+      toast('success', `Typeshelf ${s.version} is ready. Restart from Settings → About, or it installs when you quit.`)
+      if (Notification.isSupported())
+        new Notification({ title: `Typeshelf ${s.version} is ready`, body: 'It installs the next time Typeshelf quits.' }).show()
+    }
+  })
 })
 
 let lastFaceCount = -1

@@ -1,5 +1,5 @@
-import { useMemo, useState, type ReactElement } from 'react'
-import type { Settings } from '@shared/types'
+import { useEffect, useMemo, useState, type ReactElement } from 'react'
+import type { AppUpdateState, Settings } from '@shared/types'
 import { links, windowsName } from '@shared/links'
 import { findDuplicates, formatBytes } from '@shared/families'
 import { api, run, useStore } from '../store'
@@ -353,6 +353,11 @@ export function SettingsView(): ReactElement {
   const info = useStore((s) => s.info)
   const library = useStore((s) => s.library)
   const [appUpdate, setAppUpdate] = useState<string>('')
+  const [updateState, setUpdateState] = useState<AppUpdateState>({ status: 'idle' })
+  useEffect(() => {
+    void api().getAppUpdateState().then(setUpdateState)
+    return api().on('appUpdate:changed', setUpdateState)
+  }, [])
   if (!settings) return <div className="page" />
 
   const patch = async (p: Partial<Settings>): Promise<void> => {
@@ -471,16 +476,32 @@ export function SettingsView(): ReactElement {
 
       <div className="card">
         <h3>About</h3>
-        <Row title={`Typeshelf ${info?.version ?? ''}`} desc={appUpdate || `Data: ${info?.userData ?? ''}`}>
-          <button
-            type="button"
-            className="btn"
-            onClick={() =>
-              void run(api().checkAppUpdate()).then((r) => r && setAppUpdate(r.message ?? (r.available ? `Version ${r.version} available` : 'Up to date')))
-            }
-          >
-            <I.Refresh /> Check for app updates
-          </button>
+        <Row
+          title={`Typeshelf ${info?.version ?? ''}`}
+          desc={
+            updateState.status === 'ready'
+              ? `Version ${updateState.version} is ready to install.`
+              : updateState.status === 'downloading'
+                ? `Downloading version ${updateState.version}… ${updateState.percent ?? 0}%`
+                : appUpdate || `Data: ${info?.userData ?? ''}`
+          }
+        >
+          {updateState.status === 'ready' ? (
+            <button type="button" className="btn primary" onClick={() => void run(api().installAppUpdate())}>
+              <I.Refresh /> Restart to update
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn"
+              disabled={updateState.status === 'downloading' || updateState.status === 'checking'}
+              onClick={() =>
+                void run(api().checkAppUpdate()).then((r) => r && setAppUpdate(r.message ?? (r.available ? `Version ${r.version} available` : 'Up to date')))
+              }
+            >
+              <I.Refresh /> Check for app updates
+            </button>
+          )}
         </Row>
         <Row title="Font news and tips" desc="An occasional email about new fonts and Typeshelf releases. Opens a sign-up page in your browser; nothing is sent from the app.">
           <button type="button" className="btn" onClick={() => void run(api().openExternal(links.newsletter(info?.version)))}>

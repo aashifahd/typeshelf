@@ -19,7 +19,7 @@ import { collectionsStore, settingsStore } from './state'
 import { isFontFile } from './scanner/parse'
 import * as updates from './fontUpdates'
 import { providerStore } from './state'
-import { checkAppUpdate } from './appUpdater'
+import { checkAppUpdate, getAppUpdateState, installAppUpdate } from './appUpdater'
 import { applySettingsSideEffects } from './settingsEffects'
 import log from './log'
 
@@ -63,7 +63,7 @@ const SETTING_KEYS: (keyof Settings)[] = [
   'hotReloadActiveFonts'
 ]
 
-export function registerIpc(getWindow: () => BrowserWindow | null): void {
+export function registerIpc(getWindow: () => BrowserWindow | null, beforeUpdateQuit: () => void = () => undefined): void {
   const handlers: Handlers = {
     appInfo: async () => ({
       version: app.getVersion(),
@@ -223,7 +223,9 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
       assertProvider(provider)
       await updates.rollback(provider, String(key))
     },
-    checkAppUpdate: () => checkAppUpdate()
+    checkAppUpdate: () => checkAppUpdate(),
+    getAppUpdateState: async () => getAppUpdateState(),
+    installAppUpdate: async () => installAppUpdate(beforeUpdateQuit)
   }
 
   for (const [name, fn] of Object.entries(handlers)) {

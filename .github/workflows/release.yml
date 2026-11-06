@@ -1,0 +1,62 @@
+name: Release
+
+# Push a tag like v1.0.1 (matching "version" in package.json) to build the
+# installer and attach it to a *draft* GitHub Release. Review the draft, add
+# notes from CHANGELOG.md, then click Publish: installed apps update themselves
+# from published releases only.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write # create the draft release and upload files
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish draft release
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Tag must match package.json version
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          if ("v$version" -ne "${{ github.ref_name }}") { throw "Tag ${{ github.ref_name }} does not match package.json version $version" }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Make sure the Electron binary is present
+        shell: pwsh
+        run: |
+          if (-not (Test-Path node_modules/electron/dist/electron.exe)) { node node_modules/electron/install.js }
+
+      - name: Checks
+        run: |
+          npm run typecheck
+          npm test
+          npm run notices:check
+
+      - name: Build app
+        run: npm run build
+        env:
+          MAIN_VITE_GOOGLE_FONTS_API_KEY: ${{ secrets.GOOGLE_FONTS_API_KEY }}
+
+      # Code signing goes here once SignPath Foundation approves the project
+      # (see docs/RELEASING.md). Until then the installer is unsigned.
+
+      - name: Build installer and upload to a draft release
+        run: npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

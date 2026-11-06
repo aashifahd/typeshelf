@@ -111,6 +111,10 @@ src/
 - **Font files:** the font protocol only serves files that are in the index, zip extraction ignores folder paths in archives, and downloads only come from known provider hosts.
 - **Packaged app:** Electron's Node mode, inspector flags and `NODE_OPTIONS` are switched off. The app only loads from its own archive, and that archive is integrity-checked at startup.
 
+## Releases
+
+See [docs/RELEASING.md](docs/RELEASING.md) for how releases, self-updates and code signing work, and [CHANGELOG.md](CHANGELOG.md) for what changed.
+
 ## Contributing
 
 Bug reports, fixes and translations are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). To report a security problem, see [SECURITY.md](SECURITY.md).

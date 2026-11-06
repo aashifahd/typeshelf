@@ -276,6 +276,8 @@ export function installMock(): void {
     },
     rollbackFamily: async () => undefined,
     checkAppUpdate: async () => ({ available: false, message: 'Updates are disabled in browser preview' }),
+    getAppUpdateState: async () => ({ status: 'idle' }),
+    installAppUpdate: async () => undefined,
     on: (event, cb) => {
       if (!listeners.has(event)) listeners.set(event, new Set())
       listeners.get(event)!.add(cb as (p: unknown) => void)
