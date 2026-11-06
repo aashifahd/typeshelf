@@ -72,8 +72,14 @@ describe('live providers', () => {
       const st = (await list('family=Lora'))[0]
       const stFiles = googleApiDownloads('Lora', st.files, [])
       expect(stFiles.map((d) => d.filename)).toContain('Lora-Bold.ttf')
-      const stFont: any = fontkit.create(Buffer.from(await (await fetch(stFiles[0].url)).arrayBuffer()))
+      // Static files carry their weight in the family name ("Lora Medium"); Regular is plain "Lora".
+      const regular = stFiles.find((d) => d.filename === 'Lora-Regular.ttf')!
+      const stFont: any = fontkit.create(Buffer.from(await (await fetch(regular.url)).arrayBuffer()))
       expect(stFont.familyName).toBe('Lora')
+      expect(Object.keys(stFont.variationAxes ?? {})).toHaveLength(0)
+      const medium = stFiles.find((d) => d.filename === 'Lora-Medium.ttf')!
+      const medFont: any = fontkit.create(Buffer.from(await (await fetch(medium.url)).arrayBuffer()))
+      expect(medFont['OS/2'].usWeightClass).toBe(500)
     },
     60_000
   )
