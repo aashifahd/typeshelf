@@ -33,8 +33,11 @@ function defaultSources(): Source[] {
   return list
 }
 
+/** A folder containing this file is waiting to be deleted and is never scanned. */
+export const DELETE_MARKER = '.typeshelf-pending-delete'
+
 async function walk(dir: string, depth = 0, out: string[] = []): Promise<string[]> {
-  if (depth > MAX_DEPTH) return out
+  if (depth > MAX_DEPTH || existsSync(join(dir, DELETE_MARKER))) return out
   let entries
   try {
     entries = await readdir(dir, { withFileTypes: true })

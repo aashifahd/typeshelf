@@ -90,8 +90,9 @@ test.describe.serial('Google Fonts: install, auto-update, roll back', () => {
 
   test('uninstalls the family', async () => {
     // Uninstall moves files to the Recycle Bin, so only run it on CI machines.
-    test.skip(!process.env.CI, 'moves files to the Recycle Bin; CI only')
+    test.skip(!process.env.CI && !process.env.E2E_UNINSTALL, 'moves files to the Recycle Bin; CI only (or set E2E_UNINSTALL=1)')
     const { page } = r
+    const dir = record(userData)!.dir
     await navItem(page, 'Google Fonts').last().click()
     await page.getByLabel('Search catalog').fill(FAMILY)
     const row = familyRow(page, FAMILY)
@@ -100,5 +101,19 @@ test.describe.serial('Google Fonts: install, auto-update, roll back', () => {
     await page.getByRole('menu').getByRole('button', { name: /Uninstall/ }).click()
     await expect(row.getByRole('button', { name: 'Install' })).toBeVisible()
     await expect.poll(() => record(userData)).toBeUndefined()
+
+    // Gone from the library straight away, even if a locked file had to wait.
+    await navItem(page, 'All fonts').click()
+    await search(page, FAMILY)
+    await expect(familyRow(page, FAMILY)).toHaveCount(0)
+
+    // Anything that was locked is deleted on the next start.
+    await quit(r)
+    r = await launch(userData)
+    await expect.poll(() => existsSync(dir)).toBe(false)
+    await expect
+      .poll(() => readJson<{ pendingDelete?: string[] }>(userData, 'providers.json').pendingDelete ?? [])
+      .toEqual([])
+    expect(r.errors).toEqual([])
   })
 })

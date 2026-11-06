@@ -1,6 +1,6 @@
 import { Notification, shell } from 'electron'
 import { existsSync } from 'node:fs'
-import { mkdir, rename, rm } from 'node:fs/promises'
+import { mkdir, readdir, rename, rm, writeFile } from 'node:fs/promises'
 import { randomUUID } from 'node:crypto'
 import { join } from 'node:path'
 import type { ActivationMode, CatalogFamily, FontUpdate, InstalledProviderFamily, ProviderId } from '@shared/types'
@@ -10,7 +10,7 @@ import { isNewerVersion } from './providers/select'
 import { safeName, type Provider } from './providers/types'
 import { providerStore, settingsStore } from './state'
 import { scanPool } from './scanner/pool'
-import { library } from './library'
+import { DELETE_MARKER, library } from './library'
 import { activation } from './activation'
 import { activateFaces, facesUnder } from './ops'
 import log from './log'
@@ -110,20 +110,9 @@ export function uninstallFamily(providerId: ProviderId, key: string): Promise<vo
     const rec = findInstalled(providerId, key)
     if (!rec) return
     activation.deactivate(facesUnder(rec.dir).map((f) => f.path))
-    // Just-deactivated fonts (and fresh downloads being scanned by antivirus)
-    // can stay locked for a moment, so retry before giving up.
-    let trashed = false
-    for (let attempt = 0; attempt < 4 && !trashed; attempt++) {
-      try {
-        await shell.trashItem(rec.dir)
-        trashed = true
-      } catch (e) {
-        log.warn(`uninstall: moving ${rec.dir} to the Recycle Bin failed (attempt ${attempt + 1})`, e)
-        await new Promise((r) => setTimeout(r, 300 * (attempt + 1)))
-      }
-    }
-    if (!trashed) await rm(rec.dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 })
-    await rm(backupDir(rec), { recursive: true, force: true, maxRetries: 10, retryDelay: 300 })
+    const deferred = (await removeFolder(rec.dir, true)) === 'deferred'
+    await removeFolder(backupDir(rec), false)
+    if (deferred) emit.toast('info', `Some ${rec.name} files are still in use by another app. Typeshelf will delete them next time it starts.`)
     providerStore.update((s) => {
       s.installed = s.installed.filter((i) => i !== rec)
       s.updates = s.updates.filter((u) => updKey(u.provider, u.key) !== updKey(providerId, key))
@@ -158,6 +147,71 @@ async function renameRetry(from: string, to: string): Promise<void> {
       await new Promise((r) => setTimeout(r, 150 * (attempt + 1)))
     }
   }
+}
+
+/**
+ * Remove a folder: Recycle Bin first (if `trash`), then delete. Apps such as
+ * Photoshop, and antivirus scanners, can keep a font file open after it was
+ * turned off. If the folder stays locked it's moved to `.trash` (never
+ * scanned) or, failing that, marked so the scanner skips it; either way it's
+ * deleted at the next start.
+ */
+async function removeFolder(dir: string, trash: boolean): Promise<'removed' | 'deferred'> {
+  if (!existsSync(dir)) return 'removed'
+  if (trash) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        await shell.trashItem(dir)
+        return 'removed'
+      } catch (e) {
+        log.warn(`moving ${dir} to the Recycle Bin failed`, (e as Error).message)
+        await new Promise((r) => setTimeout(r, 300))
+      }
+    }
+  }
+  try {
+    await rm(dir, { recursive: true, force: true, maxRetries: 4, retryDelay: 200 })
+    return 'removed'
+  } catch (e) {
+    log.warn(`deleting ${dir} failed; deferring`, (e as Error).message)
+  }
+  let pending = dir
+  try {
+    const parked = join(managedRoot(), '.trash', randomUUID())
+    await mkdir(join(parked, '..'), { recursive: true })
+    await renameRetry(dir, parked)
+    pending = parked
+  } catch {
+    try {
+      await writeFile(join(dir, DELETE_MARKER), 'Typeshelf will delete this folder.\n')
+    } catch (e) {
+      log.error(`could not mark ${dir} for deletion`, e)
+    }
+  }
+  providerStore.update((s) => {
+    s.pendingDelete = [...new Set([...(s.pendingDelete ?? []), pending])]
+  })
+  return 'deferred'
+}
+
+/** Delete folders left behind by uninstalls whose files were locked. Run at startup. */
+export async function purgePendingDeletes(): Promise<void> {
+  const trashRoot = join(managedRoot(), '.trash')
+  const leftovers = existsSync(trashRoot) ? (await readdir(trashRoot)).map((n) => join(trashRoot, n)) : []
+  const pending = [...new Set([...(providerStore.get().pendingDelete ?? []), ...leftovers])]
+  if (!pending.length) return
+  const stillThere: string[] = []
+  for (const dir of pending) {
+    try {
+      await rm(dir, { recursive: true, force: true, maxRetries: 2, retryDelay: 200 })
+    } catch {
+      stillThere.push(dir)
+    }
+  }
+  providerStore.update((s) => {
+    s.pendingDelete = stillThere
+  })
+  log.info(`purged ${pending.length - stillThere.length} of ${pending.length} pending folder(s)`)
 }
 
 function backupDir(rec: InstalledProviderFamily): string {

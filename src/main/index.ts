@@ -8,7 +8,7 @@ import { activation } from './activation'
 import { registerIpc, send, toast } from './ipc'
 import { flushAll, settingsStore } from './state'
 import { scanPool } from './scanner/pool'
-import { setUpdateEmitter, startUpdateScheduler, checkForUpdates, applyUpdates } from './fontUpdates'
+import { setUpdateEmitter, startUpdateScheduler, checkForUpdates, applyUpdates, purgePendingDeletes } from './fontUpdates'
 import { initAppUpdater } from './appUpdater'
 import { applySettingsSideEffects, applyTitleBar, overlayColors } from './settingsEffects'
 import iconPath from '../../build/icon.png?asset'
@@ -176,6 +176,7 @@ app.whenReady().then(async () => {
     win.webContents.once('did-finish-load', () => void runSmokeTest())
     return
   }
+  await purgePendingDeletes().catch((e) => log.error('purging pending deletes failed', e))
   void library.scan()
   startUpdateScheduler()
   initAppUpdater()

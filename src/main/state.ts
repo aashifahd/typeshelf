@@ -59,7 +59,9 @@ export const collectionsStore = new JsonStore<{ collections: Collection[] }>('co
 export const providerStore = new JsonStore<{
   installed: InstalledProviderFamily[]
   updates: FontUpdate[]
-}>('providers', { installed: [], updates: [] })
+  /** Folders of uninstalled families that were locked; deleted at next start. */
+  pendingDelete: string[]
+}>('providers', { installed: [], updates: [], pendingDelete: [] })
 
 export function flushAll(): void {
   for (const s of [settingsStore, libraryStore, activationStore, collectionsStore, providerStore]) s.flush()
