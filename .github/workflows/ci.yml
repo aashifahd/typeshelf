@@ -41,6 +41,14 @@ jobs:
       - name: Tests
         run: npm test
 
+      # Checks the real Google Fonts Developer API response format. Skipped when
+      # the secret isn't available (e.g. pull requests from forks).
+      - name: Live Google Fonts API test
+        run: npx vitest run tests/live-providers.test.ts -t "Developer API"
+        env:
+          LIVE: '1'
+          GOOGLE_FONTS_API_KEY: ${{ secrets.GOOGLE_FONTS_API_KEY }}
+
       - name: Third-party licences
         run: npm run notices:check
 
