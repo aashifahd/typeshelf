@@ -11,7 +11,7 @@
 import { execFileSync, spawn } from 'node:child_process'
 import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs'
 import { createServer } from 'node:http'
-import { basename, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 
 const [oldInstaller, newDir] = process.argv.slice(2)
 if (!oldInstaller || !newDir) throw new Error('usage: self-update-test.mjs <old-installer.exe> <new-release-dir>')
@@ -34,7 +34,11 @@ async function waitFor(what, fn, timeoutMs, everyMs = 2000) {
 function installed() {
   const ps = `Get-ItemProperty 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like 'Typeshelf*' } | Select-Object DisplayVersion, InstallLocation, UninstallString | ConvertTo-Json -Compress`
   const out = execFileSync('powershell', ['-NoProfile', '-Command', ps], { encoding: 'utf8' }).trim()
-  return out ? JSON.parse(out) : null
+  if (!out) return null
+  const i = JSON.parse(out)
+  // electron-builder doesn't set InstallLocation; the uninstaller sits in the install folder.
+  const uninstaller = /^"([^"]+)"/.exec(i.UninstallString ?? '')?.[1]
+  return { ...i, InstallLocation: i.InstallLocation || (uninstaller ? dirname(uninstaller) : null) }
 }
 
 // ---- 1. update server
