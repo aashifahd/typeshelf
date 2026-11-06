@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="../../releases/latest"><b>Download for Windows</b></a> ·
-  <a href="https://cenodigital.com/typeshelf">Website</a> ·
+  <a href="https://cenodigital.com/typeshelf/">Website</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 

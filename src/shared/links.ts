@@ -1,4 +1,5 @@
-// Outbound links. Links to cenodigital.com carry UTM tags so visits from the app
+// Outbound links. cenodigital.com URLs use the site's canonical trailing-slash
+// form, so there's no redirect hop. They carry UTM tags so visits from the app
 // show up as source "typeshelf" in analytics (and as a lead source in the CRM).
 // Nothing is sent anywhere until the user clicks a link.
 
@@ -18,8 +19,8 @@ export function tracked(path: string, campaign: LinkPlace, version?: string): st
 
 export const links = {
   credit: (v?: string) => tracked('/', 'about', v),
-  services: (v?: string) => tracked('/services', 'services', v),
-  newsletter: (v?: string) => tracked('/typeshelf#newsletter', 'newsletter', v),
+  services: (v?: string) => tracked('/services/', 'services', v),
+  newsletter: (v?: string) => tracked('/typeshelf/#newsletter', 'newsletter', v),
   source: () => REPO,
   /** Pre-filled GitHub issue form (field ids match .github/ISSUE_TEMPLATE/bug_report.yml). */
   bugReport: (version: string, windows: string) => {

@@ -5,7 +5,7 @@
   "description": "A free, open-source font manager for Windows with auto-updating Google Fonts and Fontshare fonts.",
   "main": "out/main/index.js",
   "author": "CenoDigital (Pvt) Ltd",
-  "homepage": "https://cenodigital.com/typeshelf",
+  "homepage": "https://cenodigital.com/typeshelf/",
   "license": "GPL-3.0-or-later",
   "private": true,
   "scripts": {

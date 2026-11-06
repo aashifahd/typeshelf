@@ -4,7 +4,7 @@ import { links, tracked, windowsName } from '../src/shared/links'
 describe('outbound links', () => {
   it('tags CenoDigital links with UTM parameters', () => {
     const u = new URL(links.services('1.2.0'))
-    expect(u.origin + u.pathname).toBe('https://cenodigital.com/services')
+    expect(u.origin + u.pathname).toBe('https://cenodigital.com/services/')
     expect(Object.fromEntries(u.searchParams)).toEqual({
       utm_source: 'typeshelf',
       utm_medium: 'app',
